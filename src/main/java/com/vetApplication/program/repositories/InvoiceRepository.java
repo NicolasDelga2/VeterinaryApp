@@ -1,4 +1,7 @@
 package com.vetApplication.program.repositories;
 
-public interface InvoiceRepository {
+import com.vetApplication.program.models.Invoice;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
 }

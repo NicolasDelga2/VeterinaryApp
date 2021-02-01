@@ -26,7 +26,7 @@ public class Invoice {
 
 
     @ManyToOne
-    @JoinColumn(name = "clientid", insertable = false,updatable = false)
+    @JoinColumn(name = "client")
     private Client client;
     private Integer clientId;
 
