@@ -22,7 +22,10 @@ public class Employee extends Person{
     @ManyToOne
     @JoinColumn(name = "employeeType", insertable = false,updatable = false)
     private EmployeeType employeeType;
-    private Integer employeeTypeId;
+
+    @ManyToOne
+    @JoinColumn(name = "location")
+    private Location location;
 
 
     private String photo;

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -26,12 +27,16 @@ public class Supplier {
         private String mobile;
         private String website;
         private String email;
+        private String details;
 
         @ManyToOne
         @JoinColumn(name = "locationid" , insertable = false, updatable = false)
         private Location location;
         private Integer locationid;
 
-        private String details;
+        @OneToMany
+        private List<Product> productList;
+
+
 
 }

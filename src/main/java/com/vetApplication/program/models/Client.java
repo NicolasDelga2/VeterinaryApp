@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,4 +18,18 @@ public class Client extends Person{
 
     private String details;
     private String website;
+
+    @ManyToOne
+    @JoinColumn(name = "location")
+    private Location location;
+
+    @ManyToOne
+    @JoinColumn(name = "invoice")
+    private Invoice invoice;
+
+    @OneToMany
+    private List<Service> serviceList;
+
+
+
 }

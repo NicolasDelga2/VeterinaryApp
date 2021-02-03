@@ -26,11 +26,9 @@ public class Turn extends CommonObject{
     @ManyToOne
     @JoinColumn(name = "employeeid",insertable = false,updatable = false)
     private Employee employee;
-    private Integer employeeid;
 
     @ManyToOne
     @JoinColumn(name = "clientid", insertable = false,updatable = false)
     private Client client;
-    private Integer clientid;
 
 }
