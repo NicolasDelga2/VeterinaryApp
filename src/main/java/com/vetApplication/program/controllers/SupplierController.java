@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/v1/supplier")
+@RequestMapping("/api/v1/supplier")
 public class SupplierController {
 
     @Autowired

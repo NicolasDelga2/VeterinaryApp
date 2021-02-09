@@ -1,59 +1,77 @@
 package com.vetApplication.program.security;
 
-
-import com.vetApplication.program.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+import static com.vetApplication.program.security.ApplicationUserRole.*;
+import static com.vetApplication.program.security.ApplicationUserRole.EMPLEADO;
+
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
-    UserDetailsServiceImpl userDetailsService;
-
-    @Override
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-
-        /*auth.inMemoryAuthentication()  // Static Users
-                .withUser("user").password("12345").roles("Admin").and()
-                .withUser("manager").password("123456").roles("Manager");*/
-
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
+    public SecurityConfig(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // Desabilitar el token para que un formulario sea deshabilitado, No tiene sentido porque ahora es una apirest
-        http.csrf().disable()
-                .httpBasic()
-                .and().sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // cualquier otra peticion requiere autenticacion
+        http
+                .csrf().disable()
+                .authorizeRequests() // Autorizas las request
+                .antMatchers("/","index", "/css/*", "/js/*").permitAll()
+                .antMatchers("/api/**").hasRole(ADMIN.name())
+                .anyRequest() // todas las request tienen que ser autenticadas passs user
+                .authenticated()
                 .and()
+                .httpBasic(); // autenticacion basica
 
-                // Las peticiones /login pasaran previamente por este filtro
-                .addFilterBefore(new LoginFilter("/login", authenticationManager()),
-                        UsernamePasswordAuthenticationFilter.class)
-
-                // Las demas peticiones pasaran por este filtro para validar el token
-                .addFilterBefore(new JwtFilter(),
-                        UsernamePasswordAuthenticationFilter.class);
-                }
     }
 
+    @Override
+    @Bean
+    protected UserDetailsService userDetailsService() {
+      UserDetails nicoUser = User.builder()
+                .username("nico")
+                .password(passwordEncoder.encode("password"))
+               // .roles(ADMIN.name()) // ROLE_ADMIN
+                .authorities(ADMIN.getGrantedAuthorities())
+                .build();
+
+      UserDetails empleadoUser = User.builder()
+              .username("empleado")
+              .password(passwordEncoder.encode("password123"))
+              //.roles(EMPLEADO.name()) // ROLE_EMPLEADO
+              .authorities(EMPLEADO.getGrantedAuthorities())
+              .build();
+
+      UserDetails tomUser = User.builder()
+              .username("tom")
+              .password(passwordEncoder.encode("password"))
+              //.roles(ADMINTRAINEE.name()) // ROLE_ADMINTRAINEE
+              .authorities(ADMINTRAINEE.getGrantedAuthorities())
+              .build();
+
+      return new InMemoryUserDetailsManager(
+              nicoUser,
+              empleadoUser,
+              tomUser
+      );
+
+    }
+}
