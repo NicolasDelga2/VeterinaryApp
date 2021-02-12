@@ -2,38 +2,51 @@ package com.vetApplication.program.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.vetApplication.program.security.ApplicationUserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import static com.vetApplication.program.security.ApplicationUserRole.ADMIN;
 
 
 @Entity
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@Table
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private int id;
 
-    @Column(name = "username", unique = true)
     private String username;
-
-    @Column(name = "password")
     private String password;
+    private boolean isActive;
+    private String roles;
 
-    @Column(name = "rol")
-    private byte rol;
+    public User(int id, String username, String password, boolean isActive, String roles) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.isActive = isActive;
+        this.roles = roles;
+    }
 
-    @Column(name = "activo")
-    private boolean activo;
+    public User() {
+    }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -53,19 +66,30 @@ public class User {
         this.password = password;
     }
 
-    public byte getRol() {
-        return rol;
+    public boolean isActive() {
+        return true;
     }
 
-    public void setRol(byte rol) {
-        this.rol = rol;
+    public void setActive(boolean active) {
+        isActive = active;
     }
 
-    public boolean isActivo() {
-        return activo;
+    public String getRoles() {
+        return roles;
     }
 
-    public void setActivo(boolean activo) {
-        this.activo = activo;
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", isActive=" + isActive +
+                ", roles='" + roles + '\'' +
+                '}';
     }
 }
