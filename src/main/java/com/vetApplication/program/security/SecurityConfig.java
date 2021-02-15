@@ -1,5 +1,8 @@
 package com.vetApplication.program.security;
 
+import com.vetApplication.program.jwt.JwtConfig;
+import com.vetApplication.program.jwt.JwtTokenVerifier;
+import com.vetApplication.program.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import com.vetApplication.program.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,10 +13,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import java.util.concurrent.TimeUnit;
+import javax.crypto.SecretKey;
 
 import static com.vetApplication.program.security.ApplicationUserRole.*;
 
@@ -25,12 +28,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final SecretKey secretKey;
+    private final JwtConfig jwtConfig;
 
     @Autowired
     public SecurityConfig(PasswordEncoder passwordEncoder,
-                          UserService userService) {
+                          UserService userService,
+                          SecretKey secretKey,
+                          JwtConfig jwtConfig) {
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.secretKey = secretKey;
+        this.jwtConfig = jwtConfig;
     }
 
     @Override
@@ -39,31 +48,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 //   .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 //   .and()
                 .csrf().disable()
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
+                .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
                 .authorizeRequests() // Autorizas las request
                 .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(ADMIN.name())
                 .anyRequest() // todas las request tienen que ser autenticadas passs user
-                .authenticated()
-                .and()
-                //.httpBasic(); // autenticacion basica
-                .formLogin() // Form log in authentication
-                        .loginPage("/login")
-                        .permitAll()
-                        .defaultSuccessUrl("/users", true)
-                        .passwordParameter("password")
-                        .usernameParameter("username")
-                .and()  // La sesion es por 30 minutos con remember me extendes el tiempo.
-                .rememberMe().tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21))
-                .key("somethingverysecured")// dos semanas
-                .rememberMeParameter("remember-me")
-                .and()
-                    .logout()
-                    .logoutUrl("/logout")
-                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
-                    .clearAuthentication(true)
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID", "remember-me", "PHPSESSID")
-                    .logoutSuccessUrl("/login");
+                .authenticated();
+
     }
 
     /*
@@ -107,4 +101,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         provider.setUserDetailsService(userService);
         return provider;
     }
+
+    /*
+          .authenticated()
+                .and()
+                //.httpBasic(); // autenticacion basica
+                .formLogin() // Form log in authentication
+                        .loginPage("/login")
+                        .permitAll()
+                        .defaultSuccessUrl("/users", true)
+                        .passwordParameter("password")
+                        .usernameParameter("username")
+                .and()  // La sesion es por 30 minutos con remember me extendes el tiempo.
+                .rememberMe().tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21))
+                .key("somethingverysecured")// dos semanas
+                .rememberMeParameter("remember-me")
+                .and()
+                    .logout()
+                    .logoutUrl("/logout")
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+                    .clearAuthentication(true)
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID", "remember-me", "PHPSESSID")
+                    .logoutSuccessUrl("/login");*/
 }
